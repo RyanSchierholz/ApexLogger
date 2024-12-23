@@ -17,4 +17,5 @@ IlluminatedCloud
 **/profileSessionSettings/**.*
 
 force-app/main/default/settings/
-force-app/main/default/profiles/
+force-app/main/default/profiles/.localdevserver/
+.localdevserver/
