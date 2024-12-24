@@ -8,7 +8,7 @@
 
 <!-- Log Reader -->
 <template>
-  <lightning-card title="Log Reader" icon-name="custom:custom67">
+  <lightning-card title="Log Reader" icon-name="standard:apex">
     <div slot="actions">
       <lightning-button-group class="slds-m-horizontal_large">
         <!-- <lightning-button-icon-stateful
@@ -19,13 +19,13 @@
           alternative-text="ALL">
         </lightning-button-icon-stateful> -->
       <lightning-button-icon-stateful
-          name="info"
-          icon-name="utility:info"
-          selected={logLevelsSelected.info}
-          onclick={handleButtonClick}
-          alternative-text="INFO">
-        </lightning-button-icon-stateful>
-        <lightning-button-icon-stateful
+        name="info"
+        icon-name="utility:info"
+        selected={logLevelsSelected.info}
+        onclick={handleButtonClick}
+        alternative-text="INFO">
+      </lightning-button-icon-stateful>
+      <lightning-button-icon-stateful
         name="debug"
         icon-name="utility:bug"
         selected={logLevelsSelected.debug}
@@ -33,20 +33,20 @@
         alternative-text="DEBUG">
       </lightning-button-icon-stateful>
       <lightning-button-icon-stateful
-      name="warn"
-      icon-name="utility:warning"
-      selected={logLevelsSelected.warn}
-      onclick={handleButtonClick}
-      alternative-text="WARN">
-    </lightning-button-icon-stateful>
-    <lightning-button-icon-stateful
-    name="error"
-    icon-name="utility:error"
-    selected={logLevelsSelected.error}
-    onclick={handleButtonClick}
-    alternative-text="ERROR">
-  </lightning-button-icon-stateful>
-</lightning-button-group>
+        name="warn"
+        icon-name="utility:warning"
+        selected={logLevelsSelected.warn}
+        onclick={handleButtonClick}
+        alternative-text="WARN">
+      </lightning-button-icon-stateful>
+      <lightning-button-icon-stateful
+        name="error"
+        icon-name="utility:error"
+        selected={logLevelsSelected.error}
+        onclick={handleButtonClick}
+        alternative-text="ERROR">
+      </lightning-button-icon-stateful>
+  </lightning-button-group>
 <lightning-button-group class="slds-m-right_large">
     <lightning-button
       variant={tailButton.variant}
@@ -70,12 +70,12 @@
               label={setting.label} 
               checked={setting.checked} 
               onclick={handleSettingLpp} 
-              icon-name={setting.icon}></lightning-menu-item>
+              ></lightning-menu-item>
       </template>
       </lightning-button-menu>
 
       <lightning-button-icon
-      class="slds-m-left_xx-small"
+        class="slds-m-left_xx-small"
         icon-name="utility:refresh"
         title="Refresh"
         onclick={loadLogs}
@@ -83,8 +83,37 @@
       </lightning-button-icon>
       </div>
     <div class="slds-m-around_medium">
-      <template if:true={logs}>
+      <template if:true={logsError}>
+        <div>Error: {logsErrorJson}</div>>
+        <div> Params: {paramsForGetLogJson}</div>
+      </template>
 
+      <div class="slds-text-align_center">
+        <template if:true={isUnsubscribeDisabled}>
+            <div class="slds-text-heading_medium">To see new log entries, select the log levels desired (i.e. INFO, WARN, etc.) and click Start Tail</div>
+            <div>
+              <lightning-button
+                variant="base"
+                label="Start Tail"
+                onclick={toggleSubscribe}
+                ></lightning-button>
+            </div>
+        </template>
+        <!-- Show with TOAST
+        
+        <template if:false={isUnsubscribeDisabled}>
+          <div>New log entries are now being tracked.
+            <lightning-button
+              class="slds-m-left_large"  
+              variant="base"
+                label="Stop Tail"
+                title={tailButton.title}
+                onclick={toggleSubscribe}
+                ></lightning-button>
+              </div>
+        </template> -->
+      </div>
+      <template if:true={logs}>
         <div class="log-list">
           <lightning-datatable
             columns={columns}
@@ -98,25 +127,7 @@
             <div class="slds-var-p-around_large">There are no new logs for the selected log levels.</div>
           </template>
         </div>
-      </template>
-
-      <template if:true={logsError}>
-        <br>
-        Error: {logsErrorJson}
-        <br> Params: {paramsForGetLogJson}
-      </template>
-
-      <template if:true={isUnsubscribeDisabled}>
-        <p class="slds-var-p-bottom_medium">
-          <strong>To see new log entries pushed above, click on Tail.</strong>
-        </p>
-      </template>
-      <template if:false={isUnsubscribeDisabled}>
-        <p class="slds-var-p-bottom_medium">
-          New log entries are now being tracked and will be displayed at the top of the list.
-        </p>
-      </template>
-     
+      </template>     
     </div>
   </lightning-card>
 </template>
