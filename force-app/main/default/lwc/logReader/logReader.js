@@ -4,8 +4,9 @@
  * contributor: Ryan Schierholz
  * updated: 2024-12-20
  */
-import { LightningElement, track } from "lwc";
+import { LightningElement, api, track } from "lwc";
 import { subscribe, unsubscribe } from "lightning/empApi";
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getLogs from "@salesforce/apex/LogUiController.getLogs";
 
 // fields
@@ -41,19 +42,23 @@ const defaultColumns = [
 ];
 
 export default class LogReader extends LightningElement {
+  // Props from meta.xml
+  @api defaultLogLevels;      // e.g., "INFO,DEBUG,WARN"
+  @api defaultLogsPerPage;    // e.g., 10
+
   @track logs;
 
   @track lppSettings = [
-    {label: '10', value:10, checked:true },
-    {label: '20', value:20, checked:false},
-    {label: '50', value:50, checked:false},
+    { label: '10', value: 10, checked: false, icon: 'utility:number_input' },
+    { label: '20', value: 20, checked: false, icon: 'utility:number_input' },
+    { label: '50', value: 50, checked: false, icon: 'utility:number_input' },
   ];
 
   @track logLevelsSelected = {
     info:   false,
     debug:  false,
     warn:   false,
-    error:  true
+    error:  false
   };
 
   isSubscribeDisabled = false;
@@ -83,6 +88,37 @@ export default class LogReader extends LightningElement {
     return !!this.logs.length;
   }
 
+  connectedCallback() {
+    this.initializeLogLevels();
+    this.initializeLogsPerPage();
+  }
+
+  initializeLogLevels() {
+    // Split comma-separated string from property: "INFO,DEBUG,WARN"
+    if (this.defaultLogLevels) {
+        const levels = this.defaultLogLevels.toLowerCase().split(',');
+        levels.forEach(level => {
+            const trimmed = level.trim();
+            if (this.logLevelsSelected.hasOwnProperty(trimmed)) {
+                this.logLevelsSelected[trimmed] = true;
+            }
+        });
+    }
+  }
+
+  initializeLogsPerPage() {
+    // If admin configured a value, parse it; otherwise fallback to 10.
+    const chosenValue = this.defaultLogsPerPage 
+        ? parseInt(this.defaultLogsPerPage, 10) 
+        : 10;
+
+    // Mark the matching setting as checked.
+    this.lppSettings = this.lppSettings.map(setting => ({
+        ...setting,
+        checked: setting.value === chosenValue
+    }));
+  }
+  
   loadLogs() {
     this.paramsForGetLog.cacheBuster = (new Date()).getTime();
     console.log("Called loadLogs: " + JSON.stringify(this.paramsForGetLog));
@@ -105,6 +141,7 @@ export default class LogReader extends LightningElement {
       });
   }
 
+  // track if the log levels have changed
   handleButtonClick(event) {
     let logLevel = event.target.name;
     this.logLevelsSelected[logLevel] = !this.logLevelsSelected[logLevel];
@@ -112,17 +149,18 @@ export default class LogReader extends LightningElement {
     this.handleButtonChange();
   }
 
-  handleButtonChange() {
-    let logLevelData = [];
-    for (const [logLevel, isSelected] of Object.entries(this.logLevelsSelected)) {
-      if (isSelected) {
-        logLevelData.push(logLevel.toUpperCase());
-      }
-    }
+  //  NO LONGER USED
+  // handleButtonChange() {
+  //   let logLevelData = [];
+  //   for (const [logLevel, isSelected] of Object.entries(this.logLevelsSelected)) {
+  //     if (isSelected) {
+  //       logLevelData.push(logLevel.toUpperCase());
+  //     }
+  //   }
 
-    this.paramsForGetLog.logLevels = logLevelData;
-    this.loadLogs();
-  }
+  //   this.paramsForGetLog.logLevels = logLevelData;
+  //   this.loadLogs();
+  // }
 
   handleRowAction(event) {
     const action = event.detail.action;
@@ -137,11 +175,12 @@ export default class LogReader extends LightningElement {
     }
   }
 
-  handleLogsPerPageChange(event) {
-    this.logsPerPage = event.detail.value;
-    this.paramsForGetLog.logsPerPage = this.logsPerPage;
-    this.loadLogs();
-  }
+  //  NOT USED
+  // handleLogsPerPageChange(event) {
+  //   this.logsPerPage = event.detail.value;
+  //   this.paramsForGetLog.logsPerPage = this.logsPerPage;
+  //   this.loadLogs();
+  // }
 
   handleSettingLpp(event){
     for (let i in this.lppSettings){
@@ -152,7 +191,10 @@ export default class LogReader extends LightningElement {
         this.lppSettings[i].checked = false;
       }
     }
-    this.loadLogs();
+    //  if tailing, reload logs
+    if(this.isSubscribeDisabled){
+      this.loadLogs();
+    }
   }
 
   toggleSubscribe(){
@@ -176,16 +218,18 @@ export default class LogReader extends LightningElement {
     };
 
     // Invoke subscribe method of empApi. Pass reference to messageCallback
-    subscribe(CHANNEL_NAME, -1, messageCallback).then(response => {
-      // Response contains the subscription information on successful subscribe call
-      console.log("Successfully subscribed to : ", JSON.stringify(response.channel));
-      this.subscription = response;
-      this.toggleSubscribeButton(true);
-      this.tailButton.variant = "brand";
-      this.tailButton.iconName = "utility:stop";
-      this.tailButton.title = "Stop tailing the logs";
-      this.tailButton.label = "Stop";
-    });
+    subscribe(CHANNEL_NAME, -1, messageCallback)
+      .then(response => {
+        // Response contains the subscription information on successful subscribe call
+        console.log("Successfully subscribed to : ", JSON.stringify(response.channel));
+        this.subscription = response;
+        this.toggleSubscribeButton(true);
+        this.tailButton.variant = "brand";
+        this.tailButton.iconName = "utility:stop";
+        this.tailButton.title = "Stop tailing the logs";
+        this.tailButton.label = "Stop";
+        this.showToast('Success', 'New log entries are now being tailed.', 'success');
+      });
   }
 
   // Handles unsubscribe button click
@@ -206,5 +250,14 @@ export default class LogReader extends LightningElement {
   toggleSubscribeButton(enableSubscribe) {
     this.isSubscribeDisabled = enableSubscribe;
     this.isUnsubscribeDisabled = !enableSubscribe;
+  }
+
+  showToast(title, message, variant) {
+    const event = new ShowToastEvent({
+        title: title,
+        message: message,
+        variant: variant
+    });
+    this.dispatchEvent(event);
   }
 }
