@@ -1,0 +1,45 @@
+.log-entry-container {
+    transition: background-color 0.5s ease-in-out;
+}
+
+.highlight-flash {
+    background-color: #fffdcc; /* briefly highlight new entries */
+}
+
+/* Wrapper around the lightning-icon */
+.level-icon-container {
+    border-radius: 4px;
+    padding: 0.25rem;
+    display: inline-flex; /* keep the icon centered and tidy */
+}
+
+.badge {
+    width: 100%;
+    display: block !important;
+    text-align: center;
+}
+/* Colors for different log levels */
+.debug-background {
+    /*background-color: #f3f2f2;  gray color 3 for debug */
+    background-color: #dddbda; /* gray color 5 for debug */
+}
+.info-background {
+    /*background-color: #eef4ff;  blue 95 for info */
+    background-color: #aacbff; /* blue 80 for info */
+}
+.warn-background {
+    /* background-color: #fff1ea; Orange 95 for warn */
+    background-color: #ffba90; /* Orange 80 for warn */
+}
+.error-background {
+    /*background-color: #fef1ee;  RED 95 for error */
+    background-color: #feb8ab; /* RED 80 for error */
+}
+.INFO{
+    /* --slds-c-icon-color-foreground-defaults: orange;*/
+    /*--slds-c-icon-color-foreground-default: #0b5cab; blue 40*/
+    --slds-c-icon-color-foreground-default: #0176d3; /*blue 50*/
+ }
+ .DEBUG{
+    --slds-c-icon-color-foreground-default: #06a59a; /*teal 60*/
+ }

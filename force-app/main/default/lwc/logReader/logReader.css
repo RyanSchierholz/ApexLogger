@@ -1,8 +1,7 @@
 /**
  * Created by mikelockett on 3/15/20.
  */
-.log-list{
-    border: 1px solid #ccc;
-    border-collapse: collapse;
-    margin: 2em 0;
+.spinner {
+    vertical-align: middle;
+    white-space: nowrap;
 }

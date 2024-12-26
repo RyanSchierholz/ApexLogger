@@ -1,0 +1,101 @@
+<template>
+    <!--
+      Log Entry Item
+      Renders a single log entry in its own LWC for customization.
+    -->
+    <div class={entryContainerClass}>
+      <!-- Grid for the main row -->
+      <div class="slds-grid slds-wrap slds-grid_align-spread ">
+        
+        <!-- LEVEL BADGE OR ICON -->
+
+      <div class="slds-col slds-size_1-of-12 slds-grid slds-grid_align-center">
+        <lightning-icon lwc:if={useIcons}
+          size="small"
+          icon-name={logLevelIcon}
+          class={logEntry.LogLevel__c}
+          variant={logLevelIconVariant}
+          alternative-text={logEntry.LogLevel__c}>
+        </lightning-icon>
+        
+        <lightning-badge lwc:else
+            label={logEntry.LogLevel__c} 
+            class={logLevelBadgeClass}
+            ></lightning-badge>
+      </div>
+  
+        <!-- TIMESTAMP -->
+        <div class="slds-col slds-size_2-of-12 slds-p-around_xxx-small slds-text-color_default slds-text-align_center slds-truncate">
+          <!-- {localTimestamp} -->
+          <lightning-formatted-date-time 
+            value={logEntry.CreatedDate} 
+            year="2-digit" 
+            month="numeric" 
+            day="numeric" 
+            hour="2-digit"
+            minute="2-digit" ></lightning-formatted-date-time>
+        </div>
+    
+        <!-- LOCATION -->
+        <div class="slds-col slds-size_2-of-12 slds-p-around_xxx-small slds-text-color_default slds-text-align_left slds-truncate">
+          {logEntry.Class__c}
+        </div>
+
+        <!-- SHORT MESSAGE -->
+        <div class="slds-col slds-size_6-of-12 slds-p-around_xxx-small slds-text-color_default slds-text-align_left">
+          {logEntry.ShortMessage__c}
+        </div>
+  
+       <!-- ACTION BUTTONS -->
+      <div class="slds-col slds-size_1-of-12 slds-grid slds-grid_align-end">
+        <!-- View Details as icon -->
+        <lightning-button-icon
+          icon-name={showDetailsIcon}
+          alternative-text="View Details"
+          variant="bare"
+          size="small"
+          class="slds-m-around_xx-small"
+          onclick={handleToggleDetails}>
+        </lightning-button-icon>
+       
+      </div>
+    </div>
+
+      <!-- Expanded Details Section -->
+      <template if:true={isExpanded}>
+        <div class="slds-grid">
+          <div class="slds-col slds-size_3-of-12">
+              <!--  empty on purpose  -->
+          </div>
+          <!-- LONG MESSAGE -->
+          <div class="slds-col slds-size_8-of-12">
+            <div><strong>Id:</strong> {logEntry.Id}</div>
+            <div><strong>Name:</strong> {logEntry.Name}</div>
+            <div><strong>Timestamp:</strong> {logEntry.CreatedDate}</div>
+            <div><strong>Affected Id:</strong> {logEntry.AffectedId__c}</div>
+            <div><strong>Message:</strong> {logEntry.Message__c}</div>
+          </div>
+          <div class="slds-col slds-size_1-of-12 slds-grid_align-center">
+          <!-- Direct link to Salesforce Record -->
+            <lightning-button-icon
+              icon-name="utility:preview"
+              alternative-text="View Details"
+              variant="border"
+              size="medium"
+              class="slds-m-right_xx-small"
+              onclick={openRecord}>
+            </lightning-button-icon>
+
+             <!-- Delete as icon -->
+              <lightning-button-icon
+              icon-name="utility:delete"
+              alternative-text="Delete"
+              variant="border"
+              size="medium"
+              onclick={handleDelete}>
+            </lightning-button-icon>
+            </div>
+        </div>
+      </template>
+    </div>
+  </template>
