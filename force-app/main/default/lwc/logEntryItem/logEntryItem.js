@@ -1,3 +1,6 @@
+/**
+ * @author Ryan Schierholz
+ */
 import { LightningElement, api, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 
