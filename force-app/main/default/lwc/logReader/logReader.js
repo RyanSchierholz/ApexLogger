@@ -8,6 +8,7 @@ import { LightningElement, api, track } from "lwc";
 import { subscribe, unsubscribe } from "lightning/empApi";
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getLogs from "@salesforce/apex/LogUiController.getLogs";
+import deleteLog from "@salesforce/apex/LogUiController.deleteLog";
 
 // fields
 import SHORT_MESSAGE_FIELD from "@salesforce/schema/AppLog__c.ShortMessage__c";
@@ -43,9 +44,9 @@ const defaultColumns = [
 
 export default class LogReader extends LightningElement {
   // Props from meta.xml
-  @api defaultLogLevels;      // e.g., "INFO,DEBUG,WARN"
+  @api defaultLogLevels;      // e.g., "info,debug,warn"
   @api defaultLogsPerPage;    // e.g., 10
-
+  @api useIcons;              // e.g., true
   @track logs;
 
   @track lppSettings = [
@@ -78,14 +79,16 @@ export default class LogReader extends LightningElement {
   };
 
   paramsForGetLog = {
-    logLevels: ["INFO", "DEBUG"],
     cacheBuster: "1",
-    logsPerPage: 10
   };
   paramsForGetLogJson;
 
   get hasLogs() {
     return !!this.logs.length;
+  }
+
+  get noLogs(){
+    return !this.logs || !this.logs.length;
   }
 
   connectedCallback() {
@@ -96,13 +99,18 @@ export default class LogReader extends LightningElement {
   initializeLogLevels() {
     // Split comma-separated string from property: "INFO,DEBUG,WARN"
     if (this.defaultLogLevels) {
-        const levels = this.defaultLogLevels.toLowerCase().split(',');
+        // Remove all spaces, then convert to lowercase
+        const cleanedString = this.defaultLogLevels.replace(/\s+/g, '').toLowerCase();
+        // Now split by commas
+        const levels = cleanedString.split(',');
+
         levels.forEach(level => {
             const trimmed = level.trim();
             if (this.logLevelsSelected.hasOwnProperty(trimmed)) {
                 this.logLevelsSelected[trimmed] = true;
             }
         });
+        this.paramsForGetLog.logLevels = levels;
     }
   }
 
@@ -111,6 +119,7 @@ export default class LogReader extends LightningElement {
     const chosenValue = this.defaultLogsPerPage 
         ? parseInt(this.defaultLogsPerPage, 10) 
         : 10;
+    this.paramsForGetLog.logsPerPage = chosenValue;
 
     // Mark the matching setting as checked.
     this.lppSettings = this.lppSettings.map(setting => ({
@@ -119,12 +128,12 @@ export default class LogReader extends LightningElement {
     }));
   }
   
+  // working function, but would like to pass the new items to highlight to the logEntryItem component
   loadLogs() {
     this.paramsForGetLog.cacheBuster = (new Date()).getTime();
     console.log("Called loadLogs: " + JSON.stringify(this.paramsForGetLog));
     getLogs({ params: this.paramsForGetLog })
       .then(result => {
-
         this.logs = [];
         for (const appLog of result) {
           appLog.recordLink = "/" + appLog.Id;
@@ -132,7 +141,6 @@ export default class LogReader extends LightningElement {
         }
         this.logsError = undefined;
         this.logsErrorJson = undefined;
-        //console.log("log success: " + this.logs);
       })
       .catch(error => {
         this.logsError = error;
@@ -140,6 +148,7 @@ export default class LogReader extends LightningElement {
         this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
       });
   }
+
 
   // track if the log levels have changed
   handleButtonClick(event) {
@@ -149,18 +158,20 @@ export default class LogReader extends LightningElement {
     this.handleButtonChange();
   }
 
-  //  NO LONGER USED
-  // handleButtonChange() {
-  //   let logLevelData = [];
-  //   for (const [logLevel, isSelected] of Object.entries(this.logLevelsSelected)) {
-  //     if (isSelected) {
-  //       logLevelData.push(logLevel.toUpperCase());
-  //     }
-  //   }
+  //  USED Above. May be able to be combined...
+  handleButtonChange() {
+    let logLevelData = [];
+    for (const [logLevel, isSelected] of Object.entries(this.logLevelsSelected)) {
+      if (isSelected) {
+        logLevelData.push(logLevel.toUpperCase());
+      }
+    }
 
-  //   this.paramsForGetLog.logLevels = logLevelData;
-  //   this.loadLogs();
-  // }
+    this.paramsForGetLog.logLevels = logLevelData;
+    if(this.isSubscribeDisabled){
+      this.loadLogs();
+    }
+  }
 
   handleRowAction(event) {
     const action = event.detail.action;
@@ -252,6 +263,30 @@ export default class LogReader extends LightningElement {
     this.isUnsubscribeDisabled = !enableSubscribe;
   }
 
+  clearLogs(){
+    this.logs = undefined;
+  }
+  
+  handleDeleteEntry(event) {
+    const toDeleteId = event.detail.id;
+    // Remove from logs array
+    this.logs = this.logs.filter(entry => entry.Id !== toDeleteId);
+    
+    // Remove entry from database.
+    deleteLog({ logId: toDeleteId })
+      .then(result => {
+        this.showToast('Success', 'Log entry deleted.', 'success');
+        this.logsError = undefined;
+        this.logsErrorJson = undefined;
+      })
+      .catch(error => {
+        this.showToast('Error', error, 'error');
+        this.logsError = error;
+        this.logsErrorJson = JSON.stringify(error);
+        this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
+      });
+  }
+  
   showToast(title, message, variant) {
     const event = new ShowToastEvent({
         title: title,

@@ -76,6 +76,15 @@ public without sharing class LogUiController {
 	}
 
 	@AuraEnabled
+	public static void deleteLog(String logId) {
+		try {
+			delete new AppLog__c(Id = logId);
+		} catch (Exception e) {
+			throw new AuraHandledException('Error deleting log: ' + e.getMessage());
+		}
+	}
+
+	@AuraEnabled
 	public static void deleteLogsByLevel(String logLevel, String relDateFilter) {
 		system.debug('Deleting logs with log level: ' + logLevel + ' and date filter: ' + relDateFilter);
 		// Valid filters list

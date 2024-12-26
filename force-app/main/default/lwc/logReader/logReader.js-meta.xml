@@ -19,7 +19,7 @@
                 name="defaultLogLevels"
                 label="Default Log Levels"
                 type="String"
-                description="Comma-separated list of default log levels to track, e.g., INFO,DEBUG,WARN,ERROR."
+                description="Comma-separated list of default log levels to track, e.g., info,debug,warn,error."
             />
 
             <!--
@@ -32,6 +32,17 @@
                 type="String"
                 description="Number of logs per page: 10, 20, 50, etc."
                 default="10"
+            />
+            <!--
+              2. Property for default logs per page (number).
+                 - Admins select from 10, 20, or 50, etc.
+            -->
+            <property
+                name="useIcons"
+                label="Use Icons"
+                type="String"
+                description="Display icons for log levels instead of the text."
+                default="true"
             />
         </targetConfig>
     </targetConfigs>

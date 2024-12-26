@@ -56,6 +56,16 @@
       onclick={toggleSubscribe}
       ></lightning-button>
 </lightning-button-group>
+
+  <lightning-button-icon 
+        class="slds-m-right_xx-small"
+        icon-name="utility:clear"
+        title="Clear"
+        onclick={clearLogs}
+        disabled={noLogs}
+        >
+      </lightning-button-icon>
+
       <lightning-button-menu
           alternative-text="Settings" 
           icon-name="utility:settings"  
@@ -83,50 +93,57 @@
       </lightning-button-icon>
       </div>
     <div class="slds-m-around_medium">
+      
       <template if:true={logsError}>
         <div>Error: {logsErrorJson}</div>>
         <div> Params: {paramsForGetLogJson}</div>
       </template>
 
-      <div class="slds-text-align_center">
-        <template if:true={isUnsubscribeDisabled}>
-            <div class="slds-text-heading_medium">To see new log entries, select the log levels desired (i.e. INFO, WARN, etc.) and click Start Tail</div>
-            <div>
-              <lightning-button
-                variant="base"
-                label="Start Tail"
-                onclick={toggleSubscribe}
-                ></lightning-button>
-            </div>
-        </template>
-        <!-- Show with TOAST
+      <div class="slds-text-align_center slds-m-vertical_medium">
         
-        <template if:false={isUnsubscribeDisabled}>
-          <div>New log entries are now being tracked.
+         <!-- Show spinner & message only if tailing is active -->
+      <template if:true={isSubscribeDisabled}>
+        <div class="slds-grid">
+          <div class="slds-col slds-size_1-of-12 slds-show_inline-block slds-is-relative">
+            <lightning-spinner 
+              alternative-text="Tailing logs spinner" 
+              size="x-small"
+              variant="brand" >
+            </lightning-spinner>  
+          </div>
+          <div class="slds-col slds-size_11-of-12 slds-text-heading_small slds-text-align_left " >
+            Waiting for new logs…
+          </div>
+          
+        </div>
+        
+      </template>
+      <template if:false={logs}>
+        <div class="slds-text-align_center slds-text-heading_large slds-m-around_large">No logs to display</div>
+      </template>
+      <template if:true={isUnsubscribeDisabled}>
+          <div class="slds-text-heading_medium">To see new log entries, select the log levels desired (i.e. INFO, WARN, etc.) and click Start Tail</div>
+          <div>
             <lightning-button
-              class="slds-m-left_large"  
               variant="base"
-                label="Stop Tail"
-                title={tailButton.title}
-                onclick={toggleSubscribe}
-                ></lightning-button>
-              </div>
-        </template> -->
+              label="Start Tail"
+              onclick={toggleSubscribe}
+              ></lightning-button>
+          </div>
+      </template>
+      
+      
       </div>
       <template if:true={logs}>
-        <div class="log-list">
-          <lightning-datatable
-            columns={columns}
-            data={logs}
-            hide-checkbox-column
-            key-field="id"
-            onrowaction={handleRowAction}
-            wrap-text-max-lines="4">
-          </lightning-datatable>
-          <template if:false={hasLogs}>
-            <div class="slds-var-p-around_large">There are no new logs for the selected log levels.</div>
-          </template>
-        </div>
+        <template for:each={logs} for:item="entry">
+          <c-log-entry-item
+            key={entry.id}
+            log-entry={entry}
+            is-new={entry.isNew}
+            use-icons={useIcons}
+            ondelete={handleDeleteEntry}>
+          </c-log-entry-item>
+        </template>
       </template>     
     </div>
   </lightning-card>
