@@ -6,6 +6,17 @@
 public with sharing class Logger_Test {
 	static Logger sut = new Logger();
 
+	@TestSetup
+	static void setup() {
+		// Required Schema for AppLog__c is added automatically in org
+		insert new AppLog__c(
+			Message__c = 'Test Message',
+			LogLevel__c = 'DEBUG',
+			Class__c = 'myClass',
+			UserId__c = UserInfo.getUserId()
+		);
+	}
+
 	@IsTest
 	static void debugWritesCorrectValues() {
 
