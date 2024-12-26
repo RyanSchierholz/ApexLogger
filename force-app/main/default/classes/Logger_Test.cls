@@ -8,13 +8,24 @@ public with sharing class Logger_Test {
 
 	@TestSetup
 	static void setup() {
-		// Required Schema for AppLog__c is added automatically in org
-		insert new AppLog__c(
-			Message__c = 'Test Message',
-			LogLevel__c = 'DEBUG',
-			Class__c = 'myClass',
-			UserId__c = UserInfo.getUserId()
-		);
+		Logger.ignoreTestMode = true;
+		sut.debug('My message', 'myClass');
+		sut.debug('My message', 'myClass', 'my id');
+		sut.warn('My message', 'myClass');
+		sut.warn('My message', 'myClass', 'my id');
+		sut.error('My message', 'myClass');
+		try {
+			//noinspection ApexUnusedDeclaration
+			Double badNumber = 1 / 0; // force MathException
+		} catch (Exception ex) {
+			sut.error(ex, 'myClass');
+		}
+		try {
+			//noinspection ApexUnusedDeclaration
+			Double badNumber = 1 / 0; // force MathException
+		} catch (Exception ex) {
+			sut.error(ex, 'myClass', 'idValue');
+		}
 	}
 
 	@IsTest
