@@ -80,12 +80,12 @@ export default class LogReader extends LightningElement {
 
   paramsForGetLog = {
     cacheBuster: "1",
+    logLevels: [],
+    logsPerPage: 10,
+    newLogsOnly: true,
+    tailTimestamp: null
   };
   paramsForGetLogJson;
-
-  get hasLogs() {
-    return !!this.logs.length;
-  }
 
   get noLogs(){
     return !this.logs || !this.logs.length;
@@ -97,22 +97,30 @@ export default class LogReader extends LightningElement {
   }
 
   initializeLogLevels() {
-    // Split comma-separated string from property: "INFO,DEBUG,WARN"
+    const validLevels = ['info', 'debug', 'warn', 'error'];
+    
     if (this.defaultLogLevels) {
-        // Remove all spaces, then convert to lowercase
-        const cleanedString = this.defaultLogLevels.replace(/\s+/g, '').toLowerCase();
-        // Now split by commas
-        const levels = cleanedString.split(',');
-
+        const levels = this.defaultLogLevels
+            .replace(/\s+/g, '')
+            .toLowerCase()
+            .split(',')
+            .filter(level => validLevels.includes(level));
+ 
+        if (levels.length === 0) {
+            this.paramsForGetLog.logLevels = ['INFO'];
+            this.logLevelsSelected['info'] = true;
+            return;
+        }
+ 
         levels.forEach(level => {
-            const trimmed = level.trim();
-            if (this.logLevelsSelected.hasOwnProperty(trimmed)) {
-                this.logLevelsSelected[trimmed] = true;
-            }
+            this.logLevelsSelected[level] = true;
         });
-        this.paramsForGetLog.logLevels = levels;
+        this.paramsForGetLog.logLevels = levels.map(l => l.toUpperCase());
+    } else {
+        this.paramsForGetLog.logLevels = ['INFO'];
+        this.logLevelsSelected['info'] = true;
     }
-  }
+  }  
 
   initializeLogsPerPage() {
     // If admin configured a value, parse it; otherwise fallback to 10.
@@ -128,7 +136,7 @@ export default class LogReader extends LightningElement {
     }));
   }
   
-  // working function, but would like to pass the new items to highlight to the logEntryItem component
+  // working function, but would like to pass the NEW items to be highlighted to the logEntryItem component
   loadLogs() {
     this.paramsForGetLog.cacheBuster = (new Date()).getTime();
     console.log("Called loadLogs: " + JSON.stringify(this.paramsForGetLog));
@@ -153,23 +161,28 @@ export default class LogReader extends LightningElement {
   // track if the log levels have changed
   handleButtonClick(event) {
     let logLevel = event.target.name;
-    this.logLevelsSelected[logLevel] = !this.logLevelsSelected[logLevel];
-    //console.log(JSON.stringify(this.logLevelsSelected));
-    this.handleButtonChange();
-  }
 
-  //  USED Above. May be able to be combined...
-  handleButtonChange() {
-    let logLevelData = [];
-    for (const [logLevel, isSelected] of Object.entries(this.logLevelsSelected)) {
-      if (isSelected) {
-        logLevelData.push(logLevel.toUpperCase());
-      }
+    // If turning off, check if it's the last one enabled
+    if (this.logLevelsSelected[logLevel]) {
+        const enabledCount = Object.values(this.logLevelsSelected)
+            .filter(value => value).length;
+            
+        if (enabledCount <= 1) {
+            this.showToast('Warning', 'At least one log level must remain selected', 'warning');
+            return;
+        }
     }
 
-    this.paramsForGetLog.logLevels = logLevelData;
-    if(this.isSubscribeDisabled){
-      this.loadLogs();
+    // Update the selected state
+    this.logLevelsSelected[logLevel] = !this.logLevelsSelected[logLevel];
+
+    // Update params and reload if subscribed
+    this.paramsForGetLog.logLevels = Object.entries(this.logLevelsSelected)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([level, _]) => level.toUpperCase());
+
+    if(this.isSubscribeDisabled || this.logs) {
+        this.loadLogs();
     }
   }
 
@@ -185,13 +198,6 @@ export default class LogReader extends LightningElement {
         break;
     }
   }
-
-  //  NOT USED
-  // handleLogsPerPageChange(event) {
-  //   this.logsPerPage = event.detail.value;
-  //   this.paramsForGetLog.logsPerPage = this.logsPerPage;
-  //   this.loadLogs();
-  // }
 
   handleSettingLpp(event){
     for (let i in this.lppSettings){
@@ -218,29 +224,59 @@ export default class LogReader extends LightningElement {
   }
 
   // Handles subscribe button click
-  handleSubscribe() {
-    // Callback invoked whenever a new event message is received
+ handleSubscribe() {
     const messageCallback = (response) => {
-      console.log("New message received : ", JSON.stringify(response));
-      this.payload = JSON.stringify(response);
-      console.log("this.payload: " + this.payload);
-      // Response contains the payload of the new message received
-      this.loadLogs();
+        console.log("New message received : ", JSON.stringify(response));
+        this.payload = JSON.stringify(response);
+        console.log("this.payload: " + this.payload);
+        
+        // Add delay to allow trigger to complete
+        setTimeout(() => {
+            this.loadLogsWithRetry();
+        }, 500);
     };
 
-    // Invoke subscribe method of empApi. Pass reference to messageCallback
     subscribe(CHANNEL_NAME, -1, messageCallback)
-      .then(response => {
-        // Response contains the subscription information on successful subscribe call
-        console.log("Successfully subscribed to : ", JSON.stringify(response.channel));
-        this.subscription = response;
-        this.toggleSubscribeButton(true);
-        this.tailButton.variant = "brand";
-        this.tailButton.iconName = "utility:stop";
-        this.tailButton.title = "Stop tailing the logs";
-        this.tailButton.label = "Stop";
-        this.showToast('Success', 'New log entries are now being tailed.', 'success');
-      });
+        .then(response => {
+            console.log("Successfully subscribed to : ", JSON.stringify(response.channel));
+            this.subscription = response;
+            this.toggleSubscribeButton(true);
+            this.paramsForGetLog.tailTimestamp = new Date().toISOString();
+            this.tailButton.variant = "brand";
+            this.tailButton.iconName = "utility:stop";
+            this.tailButton.title = "Stop tailing the logs";
+            this.tailButton.label = "Stop";
+            this.showToast('Success', 'New log entries are now being tailed.', 'success');
+        })
+        .catch(error => {
+            this.showToast('Error', 'Failed to subscribe to log updates: ' + error.message, 'error');
+        });
+  }
+
+  loadLogsWithRetry(attempts = 3) {
+    this.paramsForGetLog.cacheBuster = (new Date()).getTime();
+    getLogs({ params: this.paramsForGetLog })
+        .then(result => {
+            this.logs = [];
+            for (const appLog of result) {
+                appLog.recordLink = "/" + appLog.Id;
+                this.logs.push(appLog);
+            }
+            this.logsError = undefined;
+            this.logsErrorJson = undefined;
+        })
+        .catch(error => {
+            console.error('Error loading logs:', error);
+            if (attempts > 0) {
+                setTimeout(() => {
+                    this.loadLogsWithRetry(attempts - 1);
+                }, 1000);
+            } else {
+                this.logsError = error;
+                this.logsErrorJson = JSON.stringify(error);
+                this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
+            }
+        });
   }
 
   // Handles unsubscribe button click
@@ -250,7 +286,7 @@ export default class LogReader extends LightningElement {
     this.tailButton.iconName = "utility:play";
     this.tailButton.title = "Tail the logs";
     this.tailButton.label = "Tail";
-
+    this.paramsForGetLog.tailTimestamp = null;
     // Invoke unsubscribe method of empApi
     unsubscribe(this.subscription, response => {
       console.log("unsubscribe() response: ", JSON.stringify(response));
@@ -278,6 +314,9 @@ export default class LogReader extends LightningElement {
         this.showToast('Success', 'Log entry deleted.', 'success');
         this.logsError = undefined;
         this.logsErrorJson = undefined;
+        if(this.logs.length === 0){
+          this.clearLogs();
+        }
       })
       .catch(error => {
         this.showToast('Error', error, 'error');

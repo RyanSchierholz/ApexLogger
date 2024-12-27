@@ -12,9 +12,14 @@ public without sharing class LogUiController {
 		String query = 'SELECT AffectedId__c, Class__c, CreatedDate, '
 				+ 'Id, LogLevel__c, Message__c, Name, ShortMessage__c '
 				+ 'FROM AppLog__c '
-				+ 'WHERE LogLevel__c IN :params.logLevels '
-				+ ' ORDER BY CreatedDate DESC '
-				+ ' LIMIT = ' + params.logsPerPage;
+				+ 'WHERE LogLevel__c IN (\'' + String.join(params.logLevels, '\',\'') + '\')';
+		if (params.newLogsOnly == true) {
+			query += ' AND CreatedDate > ' + params.tailTimestamp;
+		}
+	
+		query += ' ORDER BY CreatedDate DESC '
+				+ ' LIMIT ' + params.logsPerPage;
+				/*
 		List<AppLog__c> retVal = [
 				SELECT AffectedId__c,
 						Class__c,
@@ -28,8 +33,9 @@ public without sharing class LogUiController {
 				WHERE LogLevel__c IN :params.logLevels
 				ORDER BY CreatedDate DESC
 				LIMIT :params.logsPerPage
-		];
-		return retVal;
+		];*/
+		system.debug('Query: ' + query);
+		return Database.query(query);
 	}
 
 	@AuraEnabled
@@ -124,8 +130,13 @@ public without sharing class LogUiController {
 	public class LogParamWrapper {
 		@AuraEnabled
 		public List<String> logLevels { get; set; }
+		@AuraEnabled
 		public String cacheBuster { get; set; }
 		@AuraEnabled
 		public Integer logsPerPage { get; set; }
+		@AuraEnabled
+		public Boolean newLogsOnly { get; set; }
+		@AuraEnabled
+		public String tailTimestamp { get; set; }
 	}
 }

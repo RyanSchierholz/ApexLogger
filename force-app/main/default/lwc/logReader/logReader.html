@@ -89,6 +89,7 @@
         icon-name="utility:refresh"
         title="Refresh"
         onclick={loadLogs}
+        disabled={isUnsubscribeDisabled}
         >
       </lightning-button-icon>
       </div>
@@ -118,7 +119,7 @@
         </div>
         
       </template>
-      <template if:false={logs}>
+      <template if:true={noLogs}>
         <div class="slds-text-align_center slds-text-heading_large slds-m-around_large">No logs to display</div>
       </template>
       <template if:true={isUnsubscribeDisabled}>
@@ -128,6 +129,7 @@
               variant="base"
               label="Start Tail"
               onclick={toggleSubscribe}
+              disabled={noLevelsSelected}
               ></lightning-button>
           </div>
       </template>
