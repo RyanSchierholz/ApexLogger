@@ -21,7 +21,7 @@
           alternative-text="Refresh"
           title="Refresh"
           onclick={handleRefreshClick}
-          class="slds-m-left_x-small">
+          class="slds-m-left_xx-small">
       </lightning-button-icon>
 
       <lightning-button-menu 
@@ -29,7 +29,7 @@
         variant="border-filled"
         menu-alignment="right"
         onselect={handleDateFilterChange}
-        class="slds-m-left_x-small">
+        class="slds-m-left_xx-small">
         <template for:each={dateFilterOptions} for:item="option">
             <lightning-menu-item 
                 key={option.value}
@@ -45,66 +45,66 @@
         <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
     </template>
 
-<template if:false={isLoading}>
-                <template if:true={hasError}>
-                    <div class="slds-text-color_error slds-p-around_medium">
-                        {error}
-                    </div>
-                </template>
+    <template if:true={hasError}>
+        <div class="slds-text-color_error slds-p-around_medium">
+            {error}
+        </div>
+    </template>
 
-                <template if:false={hasError}>
-                    <table class="slds-table slds-table_bordered slds-table_cell-buffer">
-                        <thead>
-                            <tr class="slds-line-height_reset">
-                                <th scope="col">Level</th>
-                                <th scope="col" class="slds-text-align_right">Count</th>
-                                <th scope="col">First Created</th>
-                                <th scope="col" class="slds-text-align_center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template for:each={logData} for:item="log">
-                                <tr key={log.level}>
-                                    <td class="slds-text-align_center">
-                                        <lightning-icon 
-                                            icon-name={log.iconName} 
-                                            size="xx-small" 
-                                            alternative-text={log.level}>
-                                        </lightning-icon>
-                                        <!-- {log.level} -->
-                                    </td>
-                                    <td class="slds-text-align_center">
-                                        {log.count}
-                                    </td>
-                                    <td>
-                                        <lightning-formatted-date-time 
-                                            value={log.firstDate}
-                                            year="2-digit"
-                                            month="numeric"
-                                            day="numeric"
-                                            hour="numeric"
-                                            minute="2-digit">
-                                        </lightning-formatted-date-time>
-                                    </td>
-                                    <td class="slds-text-align_center">
-                                        <lightning-button-icon
-                                            size="x-small"
-                                            icon-name="utility:delete"
-                                            alternative-text="Delete Logs"
-                                            title={log.deleteTitle}
-                                            onclick={handleDeleteClick}
-                                            data-level={log.level}
-                                            >
-                                        </lightning-button-icon>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-
-                    
+    <template if:false={hasError}>
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <thead>
+                <tr class="slds-line-height_reset">
+                    <th scope="col" class="slds-text-align_center">Level</th>
+                    <th scope="col" class="slds-text-align_center">Count</th>
+                    <th scope="col">First Created</th>
+                    <th scope="col" class="slds-text-align_center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={logData} for:item="log">
+                    <tr key={log.level}>
+                        <td class="slds-text-align_center">
+                            <lightning-icon 
+                                icon-name={log.iconName} 
+                                size="small" 
+                                alternative-text={log.level}
+                                class={log.level}
+                                variant={log.variant}>
+                            </lightning-icon>
+                            <!-- {log.level} -->
+                        </td>
+                        <td class="slds-text-align_center">
+                            {log.count}
+                        </td>
+                        <td>
+                            <lightning-formatted-date-time 
+                                value={log.firstDate}
+                                year="2-digit"
+                                month="numeric"
+                                day="numeric"
+                                hour="numeric"
+                                minute="2-digit">
+                            </lightning-formatted-date-time>
+                        </td>
+                        <td class="slds-text-align_center">
+                            <lightning-button-icon
+                                size="x-small"
+                                icon-name="utility:delete"
+                                alternative-text="Delete Logs"
+                                title={log.deleteTitle}
+                                onclick={handleDeleteClick}
+                                data-level={log.level}
+                                >
+                            </lightning-button-icon>
+                        </td>
+                    </tr>
                 </template>
-            </template>
+            </tbody>
+        </table>
+
+        
+    </template>
     </article>
 
   </lightning-card>

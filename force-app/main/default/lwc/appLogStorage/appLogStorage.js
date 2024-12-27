@@ -107,10 +107,9 @@ get dateFilterOptions() {
 
   // Private methods
   async loadLogData() {
+    this.isLoading = true;
       try {
-          this.isLoading = true;
           this.error = undefined;
-          
           const results = await getLogCountByLevelDate({
               relDateFilter: this.selectedDateFilter
           });
@@ -127,10 +126,10 @@ get dateFilterOptions() {
   processLogData(results) {
       // Ensure all log levels are represented
       const processedData = [
-        { level: 'INFO', count: 0, firstDate: null, iconName: 'utility:info', deleteTitle: 'Delete INFO logs' },
+        { level: 'INFO',  count: 0, firstDate: null, iconName: 'utility:info', deleteTitle: 'Delete INFO logs' },
         { level: 'DEBUG', count: 0, firstDate: null, iconName: 'utility:bug', deleteTitle: 'Delete DEBUG logs' },
-        { level: 'WARN', count: 0, firstDate: null, iconName: 'utility:warning', deleteTitle: 'Delete WARN logs' },
-        { level: 'ERROR', count: 0, firstDate: null, iconName: 'utility:error', deleteTitle: 'Delete ERROR logs' }
+        { level: 'WARN',  count: 0, firstDate: null, iconName: 'utility:warning', deleteTitle: 'Delete WARN logs', variant: 'warning' },
+        { level: 'ERROR', count: 0, firstDate: null, iconName: 'utility:error', deleteTitle: 'Delete ERROR logs', variant: 'error' }
     ];
 
       // Update counts for existing data
