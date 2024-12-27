@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>57.0</apiVersion>
+    <apiVersion>62.0</apiVersion>
     <masterLabel>Log Reader</masterLabel>
     <description>This component displays log entries with customizable defaults.</description>
     <isExposed>true</isExposed>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
+        <target>lightning__UtilityBar</target>
+
     </targets>
     <targetConfigs>
         <!-- You can include multiple targetConfigs for each target if needed -->
-        <targetConfig targets="lightning__HomePage,lightning__AppPage">
+        <targetConfig targets="lightning__HomePage,lightning__AppPage,lightning__UtilityBar">
             <!--
               1. Property for default log levels.
                  - Accepts a comma-separated list of levels, e.g. "INFO,DEBUG,WARN".
@@ -20,6 +22,8 @@
                 label="Default Log Levels"
                 type="String"
                 description="Comma-separated list of default log levels to track, e.g., info,debug,warn,error."
+                default="INFO,DEBUG,WARN,ERROR"
+                required="true"
             />
 
             <!--
@@ -32,6 +36,7 @@
                 type="String"
                 description="Number of logs per page: 10, 20, 50, etc."
                 default="10"
+                required="true"
             />
             <!--
               2. Property for default logs per page (number).
