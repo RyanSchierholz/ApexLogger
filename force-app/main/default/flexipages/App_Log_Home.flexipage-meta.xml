@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Consolidated view of Log Reader, Log Storage, and Log Writer</description>
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
+                <componentInstanceProperties>
+                    <name>defaultLogLevels</name>
+                    <value>INFO,DEBUG,WARN,ERROR</value>
+                </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>defaultLogsPerPage</name>
                     <value>10</value>
