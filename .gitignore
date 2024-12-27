@@ -20,3 +20,4 @@ force-app/main/default/settings/
 force-app/main/default/profiles/.localdevserver/
 .localdevserver/
 force-app/main/default/lwc/jsconfig.json
+force-app/main/default/package.xml
