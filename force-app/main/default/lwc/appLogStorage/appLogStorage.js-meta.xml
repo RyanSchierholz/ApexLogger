@@ -24,6 +24,14 @@
                 description="Use relative options like TODAY, LAST_WEEK, THIS_MONTH, etc."
                 required="true">
             </property>
+            <property 
+                name="chartType" 
+                type="String" 
+                label="Chart Type" 
+                default="bar" 
+                description="Use options like bar, line, area. or Off for no chart."
+                required="true">
+            </property>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>
