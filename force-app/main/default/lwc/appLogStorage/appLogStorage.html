@@ -37,11 +37,25 @@
           {error}
         </div>
       </template>
-      <div if:true={showChart}>
-        <c-log-chart if:true={logChartData} log-data={logChartData} chart-type={chartType}>
-        </c-log-chart>
+
+      <template if:true={noData}>
+        <div class="slds-p-around_medium">
+          <div class="slds-text-heading_medium slds-p-bottom_small slds-text-align_center">No logs found</div>
+          <div class="slds-text-body_regular">
+              <p>Try these suggestions:</p>
+              <ul class="slds-list_dotted slds-p-left_medium">
+                  <li>Adjust the date filter</li>
+                  <li>Add logs using Log Writer</li>
+                  <li>Use LogService.info(m,c), LogService.debug(m,c), etc. in your code</li>
+              </ul>
+          </div>
       </div>
-      <template if:false={hasError}>
+      </template>
+      <template if:false={noData}>
+        <div if:true={showChart}>
+          <c-log-chart if:true={logChartData} log-data={logChartData} chart-type={chartType}>
+          </c-log-chart>
+        </div>
         <table class="slds-table slds-table_bordered slds-table_cell-buffer">
           <thead>
             <tr class="slds-line-height_reset">

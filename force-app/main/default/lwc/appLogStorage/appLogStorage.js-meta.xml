@@ -28,7 +28,7 @@
                 name="chartType" 
                 type="String" 
                 label="Chart Type" 
-                default="bar" 
+                default="bar"
                 description="Use options like bar, line, area. or Off for no chart."
                 required="true">
             </property>
