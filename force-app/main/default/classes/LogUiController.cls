@@ -34,6 +34,28 @@ public without sharing class LogUiController {
 	}
 
 	@AuraEnabled
+	public static void insertLog(String level,String message,String cls){
+			
+		AppLog__c log = new AppLog__c();
+		log.LogLevel__c = level;
+		log.Message__c = message;
+		log.ShortMessage__c = message.left(255);
+		log.Class__c = cls;
+		insert log;
+	}
+
+	// insert a lot platform event
+	@AuraEnabled
+	public static void insertLogPe(String level,String message,String cls){
+			
+		EventBus.publish(new AppLogEvent__e(
+			LogLevel__c = level,
+			Message__c = message,
+			Class__c = cls
+			));
+	}
+
+	@AuraEnabled
 	public static List<AggregateResult> getLogCountByLevelDate(String relDateFilter){
 		// Valid filters list
 		Set<String> validFilters = new Set<String>{
