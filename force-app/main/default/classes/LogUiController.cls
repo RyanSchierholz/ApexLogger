@@ -19,21 +19,6 @@ public without sharing class LogUiController {
 	
 		query += ' ORDER BY CreatedDate DESC '
 				+ ' LIMIT ' + params.logsPerPage;
-				/*
-		List<AppLog__c> retVal = [
-				SELECT AffectedId__c,
-						Class__c,
-						CreatedDate,
-						Id,
-						LogLevel__c,
-						Message__c,
-						Name,
-						ShortMessage__c
-				FROM AppLog__c
-				WHERE LogLevel__c IN :params.logLevels
-				ORDER BY CreatedDate DESC
-				LIMIT :params.logsPerPage
-		];*/
 		system.debug('Query: ' + query);
 		return Database.query(query);
 	}
@@ -78,6 +63,39 @@ public without sharing class LogUiController {
 		query += ' GROUP BY LogLevel__c '
 				+ 'ORDER BY LogLevel__c ';
 
+		return Database.query(query);
+	}
+
+	@AuraEnabled
+	public static List<AggregateResult> getLogsByDateLevel(String relDateFilter) {
+		system.debug('relDateFilter: ' + relDateFilter);
+		// Valid filters list
+		Set<String> validFilters = new Set<String>{
+			'TODAY',
+			'YESTERDAY',
+			'THIS_WEEK', 
+			'LAST_WEEK', 
+			'THIS_MONTH', 
+			'LAST_MONTH', 
+			'THIS_YEAR', 
+			'LAST_YEAR'
+		};
+
+		// Validate input
+		if (relDateFilter != null && !validFilters.contains(relDateFilter.toUpperCase())) {
+			throw new AuraHandledException('Invalid date filter provided');
+		}
+
+		String query = 'SELECT DAY_ONLY(convertTimezone(CreatedDate)) CreatedDate, LogLevel__c level, COUNT(Id) logCount '
+						+ 'FROM AppLog__c ';
+		// Add date filter if provided (null means ALL TIME)
+		if (validFilters.contains(relDateFilter)) {
+			query += ' WHERE CreatedDate = ' + relDateFilter;  // Use the literal directly in SOQL
+		}
+		query += ' GROUP BY DAY_ONLY(convertTimezone(CreatedDate)), LogLevel__c '
+				+ 'ORDER BY DAY_ONLY(convertTimezone(CreatedDate))';
+
+		system.debug('Query: ' + query);
 		return Database.query(query);
 	}
 
