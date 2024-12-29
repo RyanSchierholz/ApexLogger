@@ -43,7 +43,7 @@ export default class AppLogStorage extends LightningElement {
   @track logChartData = undefined;
 
   showChart = false;
-
+  noData = true;
   // Private non-reactive properties
   refreshTimerId;
 
@@ -122,7 +122,6 @@ export default class AppLogStorage extends LightningElement {
     this.selectedDateFilter = this.defaultDateFilter;
     this.showChart = this.chartType === "off" ? false : true;
     this.loadLogData();
-    //this.startRefreshTimer(); //move to loadLogData to attempt on extending with new refreshes/loads
   }
 
   disconnectedCallback() {
@@ -173,12 +172,18 @@ export default class AppLogStorage extends LightningElement {
       const results = await getLogCountByLevelDate({
         relDateFilter: this.selectedDateFilter
       });
-      const chartResults = await getLogsByDateLevel({
-        relDateFilter: this.selectedDateFilter
-      });
-
-      this.processLogData(results);
-      this.processLogChartData(chartResults);
+      if(results.length > 0){
+        const chartResults = await getLogsByDateLevel({
+          relDateFilter: this.selectedDateFilter
+        });
+        this.processLogData(results);
+        this.processLogChartData(chartResults);
+        this.noData = false;
+      }else{
+        this.noData = true;
+        console.log('noData');
+      }
+      
     } catch (error) {
       this.handleError(error, "Error loading log data");
     } finally {

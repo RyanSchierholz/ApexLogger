@@ -64,7 +64,11 @@ export default class LogChart extends LightningElement {
         backgroundColor:
           this.chartType === "line" ? "transparent" : colors[level],
         borderColor: colors[level],
-        fill: this.chartType === "area"
+        borderWidth: this.chartType === 'bar' ? 0 : null,
+        borderRadius: this.chartType === 'bar' ? 4 : null,
+        borderSkipped: this.chartType === 'bar' ? 'bottom' : false,
+        fill: this.chartType === "area",
+        tension:  this.chartType === "line" ? 0.1 : null
       }))
     };
 
@@ -90,6 +94,9 @@ export default class LogChart extends LightningElement {
         responsive: true,
         scales: {
           y: {
+            ticks: {
+              stepSize: 1
+            },
             beginAtZero: true,
             stacked: ["stackedBar", "area"].includes(this.chartType)
           },
