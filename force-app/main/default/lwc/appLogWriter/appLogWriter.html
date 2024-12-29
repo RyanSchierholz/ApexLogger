@@ -1,12 +1,13 @@
 <!-- appLogWriter.html -->
 <template>
-    <lightning-card title="Write Log Entry">
+    <lightning-card title="Write Log Entry" icon-name="standard:record_update">
         <div class="slds-m-around_medium">
             <lightning-textarea 
                 class="slds-m-vertical_medium"
-                placeholder="Enter log message"
+                placeholder="Enter message"
                 value={message} 
-                onchange={handleMessageChange}>
+                onchange={handleMessageChange}
+                variant="label-hidden">
             </lightning-textarea>
             <div class="slds-text-align_center">
                 <lightning-button-group>
