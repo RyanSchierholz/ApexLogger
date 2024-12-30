@@ -194,18 +194,32 @@ export default class AppLogStorage extends LightningElement {
   }
 
   processLogChartData(results) {
-    // new section for chart data
+    // First, determine date range
+    const dates = results.map(r => new Date(r.CreatedDate));
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    
+    // Create object with all dates initialized
     let newChartData = {};
+    for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        newChartData[dateStr] = {
+            'INFO': 0,
+            'DEBUG': 0,
+            'WARN': 0,
+            'ERROR': 0
+        };
+    }
+
+    // Fill in actual data
     results.forEach((result) => {
-      const date = result.CreatedDate;
-      const level = result.level;
-      newChartData[date] = newChartData[date] || {};
-      newChartData[date][level] = result.logCount;
+        const date = result.CreatedDate;
+        const level = result.level;
+        newChartData[date][level] = result.logCount;
     });
 
-    // only reload the data, if it's different.
     if (JSON.stringify(newChartData) !== JSON.stringify(this.logChartData)) {
-      this.logChartData = newChartData;
+        this.logChartData = newChartData;
     }
   }
 
