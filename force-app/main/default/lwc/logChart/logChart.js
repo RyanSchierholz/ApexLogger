@@ -41,7 +41,20 @@ export default class LogChart extends LightningElement {
     return this._logData;
   }
 
-  @api chartType = "bar"; // Default type
+  // In logChart.js
+  @api
+  set chartType(value) {
+      console.log('Setting chartType in logChart:', value);
+      this._chartType = value;
+      if (this.chart) {
+          this.chart.config.type = this.getChartType(value);
+          this.chart.update();
+      }
+  }
+
+  get chartType() {
+      return this._chartType || 'bar';  // Only use default if nothing is passed
+  }
   error;
   chart;
   chartjsInitialized = false;
@@ -61,14 +74,17 @@ export default class LogChart extends LightningElement {
       datasets: levels.map((level) => ({
         label: level,
         data: dates.map((date) => this.logData[date][level] || 0),
-        backgroundColor:
-          this.chartType === "line" ? "transparent" : colors[level],
+        backgroundColor: this.chartType === "line" ? 'transparent' : colors[level],
         borderColor: colors[level],
-        borderWidth: this.chartType === 'bar' ? 0 : null,
+        borderWidth: ['line', 'area'].includes(this.chartType) ? 2 : 0,
+        pointRadius: ['line', 'area'].includes(this.chartType) ? 3 : null,  // Always show points for line and area
+        pointBackgroundColor: ['line', 'area'].includes(this.chartType) ? colors[level] : null,
+        pointBorderColor: ['line', 'area'].includes(this.chartType) ? colors[level] : null,
+        pointHoverRadius: ['line', 'area'].includes(this.chartType) ? 5 : null,
         borderRadius: this.chartType === 'bar' ? 4 : null,
         borderSkipped: this.chartType === 'bar' ? 'bottom' : false,
         fill: this.chartType === "area",
-        tension:  this.chartType === "line" ? 0.1 : null
+        tension: ['line', 'area'].includes(this.chartType) ? 0.1 : null
       }))
     };
 
@@ -104,6 +120,10 @@ export default class LogChart extends LightningElement {
         },
         plugins: {
           legend: { display: false }
+        },
+        interaction: {
+          intersect: false,
+          mode: this.chartType === 'line' ? 'index' : 'nearest'
         }
       }
     };
