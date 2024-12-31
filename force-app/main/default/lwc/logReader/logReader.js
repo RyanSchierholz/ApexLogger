@@ -18,40 +18,6 @@ import AFFECTED_ID_FIELD from "@salesforce/schema/AppLog__c.AffectedId__c";
 
 const CHANNEL_NAME = "/event/AppLogEvent__e";
 
-const defaultColumns = [
-  {
-    label: "Log Name",
-    type: "url",
-    fieldName: "recordLink",
-    initialWidth: 110,
-    cellAttributes: { class: "idCell" },
-    typeAttributes: { label: { fieldName: "Name" }, target: "_blank" }
-  },
-  {
-    label: "Date",
-    fieldName: "CreatedDate",
-    type: "date",
-    typeAttributes: {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    },
-    initialWidth: 200,
-    sortable: true
-  },
-  { label: "Short Message", fieldName: SHORT_MESSAGE_FIELD.fieldApiName },
-  { label: "Location", fieldName: CLASS_FIELD.fieldApiName, initialWidth: 140 },
-  {
-    label: "Record Id",
-    fieldName: AFFECTED_ID_FIELD.fieldApiName,
-    initialWidth: 170
-  },
-  { label: "Level", fieldName: LOG_LEVEL_FIELD.fieldApiName, initialWidth: 100 }
-];
-
 export default class LogReader extends LightningElement {
   // Props from meta.xml
   @api defaultLogLevels; // e.g., "info,debug,warn"
@@ -75,7 +41,6 @@ export default class LogReader extends LightningElement {
 
   isSubscribeDisabled = false;
   isUnsubscribeDisabled = !this.isSubscribeDisabled;
-  columns = defaultColumns;
 
   subscription = {};
 
