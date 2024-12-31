@@ -44,7 +44,6 @@ export default class LogChart extends LightningElement {
   // In logChart.js
   @api
   set chartType(value) {
-      console.log('Setting chartType in logChart:', value);
       this._chartType = value;
       if (this.chart) {
           this.chart.config.type = this.getChartType(value);
