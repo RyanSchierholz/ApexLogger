@@ -13,13 +13,12 @@ public without sharing class LogUiController {
 				+ 'Id, LogLevel__c, Message__c, Name, ShortMessage__c '
 				+ 'FROM AppLog__c '
 				+ 'WHERE LogLevel__c IN (\'' + String.join(params.logLevels, '\',\'') + '\')';
-		if (params.newLogsOnly == true) {
+		if (params.newLogsOnly == true && params.tailTimestamp != null) {
 			query += ' AND CreatedDate > ' + params.tailTimestamp;
 		}
 	
-		query += ' ORDER BY CreatedDate DESC '
-				+ ' LIMIT ' + params.logsPerPage;
-		system.debug('Query: ' + query);
+		query += ' ORDER BY CreatedDate DESC LIMIT ' + params.logsPerPage;
+		
 		return Database.query(query);
 	}
 

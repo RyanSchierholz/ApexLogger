@@ -120,7 +120,6 @@ export default class AppLogStorage extends LightningElement {
   // Lifecycle hooks
   connectedCallback() {
     this.selectedDateFilter = this.defaultDateFilter;
-    this.showChart = this.chartType === "off" ? false : true;
     this.loadLogData();
   }
 
@@ -189,6 +188,7 @@ export default class AppLogStorage extends LightningElement {
     } finally {
       this.title = "Logs " + this.selectedDateLabel;
       this.startRefreshTimer();
+      this.showChart = this.chartType === "off" ? false : true;
       this.isLoading = false;
     }
   }

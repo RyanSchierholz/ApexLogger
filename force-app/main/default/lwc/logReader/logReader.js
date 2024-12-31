@@ -6,7 +6,7 @@
  */
 import { LightningElement, api, track } from "lwc";
 import { subscribe, unsubscribe } from "lightning/empApi";
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import getLogs from "@salesforce/apex/LogUiController.getLogs";
 import deleteLog from "@salesforce/apex/LogUiController.deleteLog";
 
@@ -18,53 +18,29 @@ import AFFECTED_ID_FIELD from "@salesforce/schema/AppLog__c.AffectedId__c";
 
 const CHANNEL_NAME = "/event/AppLogEvent__e";
 
-const defaultColumns = [
-  {
-    label: "Log Name", type: "url", fieldName: "recordLink", initialWidth: 110,
-    cellAttributes: { class: "idCell" },
-    typeAttributes: { label: { fieldName: "Name" }, target: "_blank" }
-  },
-  {
-    label: "Date", fieldName: "CreatedDate", type: "date", typeAttributes: {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    },
-    initialWidth: 200,
-    sortable: true
-  },
-  { label: "Short Message", fieldName: SHORT_MESSAGE_FIELD.fieldApiName },
-  { label: "Location", fieldName: CLASS_FIELD.fieldApiName, initialWidth: 140 },
-  { label: "Record Id", fieldName: AFFECTED_ID_FIELD.fieldApiName, initialWidth: 170 },
-  { label: "Level", fieldName: LOG_LEVEL_FIELD.fieldApiName, initialWidth: 100 }
-];
-
 export default class LogReader extends LightningElement {
   // Props from meta.xml
-  @api defaultLogLevels;      // e.g., "info,debug,warn"
-  @api defaultLogsPerPage;    // e.g., 10
-  @api useIcons;              // e.g., true
-  @track logs;
+  @api defaultLogLevels; // e.g., "info,debug,warn"
+  @api defaultLogsPerPage; // e.g., 10
+  @api useIcons; // e.g., true
+  @track allLogs; //the complete list from the database
+  @track logs; //the logs to display
 
   @track lppSettings = [
-    { label: '10', value: 10, checked: false, icon: 'utility:number_input' },
-    { label: '20', value: 20, checked: false, icon: 'utility:number_input' },
-    { label: '50', value: 50, checked: false, icon: 'utility:number_input' },
+    { label: "10", value: 10, checked: false, icon: "utility:number_input" },
+    { label: "20", value: 20, checked: false, icon: "utility:number_input" },
+    { label: "50", value: 50, checked: false, icon: "utility:number_input" }
   ];
 
   @track logLevelsSelected = {
-    info:   false,
-    debug:  false,
-    warn:   false,
-    error:  false
+    info: false,
+    debug: false,
+    warn: false,
+    error: false
   };
 
   isSubscribeDisabled = false;
   isUnsubscribeDisabled = !this.isSubscribeDisabled;
-  columns = defaultColumns;
 
   subscription = {};
 
@@ -72,10 +48,10 @@ export default class LogReader extends LightningElement {
   logsErrorJson;
 
   tailButton = {
-    variant:  "brand-outline",
-    label:    "Tail",
+    variant: "brand-outline",
+    label: "Tail",
     iconName: "utility:play",
-    title:    "Tail the logs",
+    title: "Tail the logs"
   };
 
   paramsForGetLog = {
@@ -87,7 +63,7 @@ export default class LogReader extends LightningElement {
   };
   paramsForGetLogJson;
 
-  get noLogs(){
+  get noLogs() {
     return !this.logs || !this.logs.length;
   }
 
@@ -97,66 +73,62 @@ export default class LogReader extends LightningElement {
   }
 
   initializeLogLevels() {
-    const validLevels = ['info', 'debug', 'warn', 'error'];
-    
+    const validLevels = ["info", "debug", "warn", "error"];
+
     if (this.defaultLogLevels) {
-        const levels = this.defaultLogLevels
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .split(',')
-            .filter(level => validLevels.includes(level));
- 
-        if (levels.length === 0) {
-            this.paramsForGetLog.logLevels = ['INFO'];
-            this.logLevelsSelected['info'] = true;
-            return;
-        }
- 
-        levels.forEach(level => {
-            this.logLevelsSelected[level] = true;
-        });
-        this.paramsForGetLog.logLevels = levels.map(l => l.toUpperCase());
+      const levels = this.defaultLogLevels
+        .replace(/\s+/g, "")
+        .toLowerCase()
+        .split(",")
+        .filter((level) => validLevels.includes(level));
+
+      if (levels.length === 0) {
+        this.paramsForGetLog.logLevels = ["INFO"];
+        this.logLevelsSelected["info"] = true;
+        return;
+      }
+
+      levels.forEach((level) => {
+        this.logLevelsSelected[level] = true;
+      });
+      this.paramsForGetLog.logLevels = levels.map((l) => l.toUpperCase());
     } else {
-        this.paramsForGetLog.logLevels = ['INFO'];
-        this.logLevelsSelected['info'] = true;
+      this.paramsForGetLog.logLevels = ["INFO"];
+      this.logLevelsSelected["info"] = true;
     }
-  }  
+  }
 
   initializeLogsPerPage() {
     // If admin configured a value, parse it; otherwise fallback to 10.
-    const chosenValue = this.defaultLogsPerPage 
-        ? parseInt(this.defaultLogsPerPage, 10) 
-        : 10;
+    const chosenValue = this.defaultLogsPerPage
+      ? parseInt(this.defaultLogsPerPage, 10)
+      : 10;
     this.paramsForGetLog.logsPerPage = chosenValue;
 
     // Mark the matching setting as checked.
-    this.lppSettings = this.lppSettings.map(setting => ({
-        ...setting,
-        checked: setting.value === chosenValue
+    this.lppSettings = this.lppSettings.map((setting) => ({
+      ...setting,
+      checked: setting.value === chosenValue
     }));
   }
-  
+
   // working function, but would like to pass the NEW items to be highlighted to the logEntryItem component
   loadLogs() {
-    this.paramsForGetLog.cacheBuster = (new Date()).getTime();
-    console.log("Called loadLogs: " + JSON.stringify(this.paramsForGetLog));
+    this.paramsForGetLog.cacheBuster = new Date().getTime();
+    // console.log("Called loadLogs: " + JSON.stringify(this.paramsForGetLog));
     getLogs({ params: this.paramsForGetLog })
-      .then(result => {
-        this.logs = [];
-        for (const appLog of result) {
-          appLog.recordLink = "/" + appLog.Id;
-          this.logs.push(appLog);
-        }
+      .then((result) => {
+        this.allLogs = result; //store all logs
+        this.logs = result; //current filtered view
         this.logsError = undefined;
         this.logsErrorJson = undefined;
       })
-      .catch(error => {
+      .catch((error) => {
         this.logsError = error;
         this.logsErrorJson = JSON.stringify(error);
         this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
       });
   }
-
 
   // track if the log levels have changed
   handleButtonClick(event) {
@@ -164,13 +136,18 @@ export default class LogReader extends LightningElement {
 
     // If turning off, check if it's the last one enabled
     if (this.logLevelsSelected[logLevel]) {
-        const enabledCount = Object.values(this.logLevelsSelected)
-            .filter(value => value).length;
-            
-        if (enabledCount <= 1) {
-            this.showToast('Warning', 'At least one log level must remain selected', 'warning');
-            return;
-        }
+      const enabledCount = Object.values(this.logLevelsSelected).filter(
+        (value) => value
+      ).length;
+
+      if (enabledCount <= 1) {
+        this.showToast(
+          "Warning",
+          "At least one log level must remain selected",
+          "warning"
+        );
+        return;
+      }
     }
 
     // Update the selected state
@@ -178,11 +155,20 @@ export default class LogReader extends LightningElement {
 
     // Update params and reload if subscribed
     this.paramsForGetLog.logLevels = Object.entries(this.logLevelsSelected)
-        .filter(([_, isSelected]) => isSelected)
-        .map(([level, _]) => level.toUpperCase());
+      .filter(([_, isSelected]) => isSelected)
+      .map(([level, _]) => level.toUpperCase());
 
-    if(this.isSubscribeDisabled || this.logs) {
-        this.loadLogs();
+    //reload if subscribed, otherwise just filter local list
+    if (!this.isSubscribeDisabled) {
+      // If not tailing, filter locally
+      if (this.allLogs) {
+        this.logs = this.allLogs.filter((log) =>
+          this.paramsForGetLog.logLevels.includes(log.LogLevel__c)
+        );
+      }
+    } else {
+      // If tailing, make server call
+      this.loadLogs();
     }
   }
 
@@ -191,32 +177,32 @@ export default class LogReader extends LightningElement {
     const row = event.detail.row;
     switch (action.name) {
       case "show_details":
-        console.log("Showing Details: " + JSON.stringify(row));
+        // console.log("Showing Details: " + JSON.stringify(row));
         break;
       case "delete":
-        console.log("Showing Delete: " + JSON.stringify(row));
+        // console.log("Showing Delete: " + JSON.stringify(row));
         break;
     }
   }
 
-  handleSettingLpp(event){
-    for (let i in this.lppSettings){
-      if(this.lppSettings[i].value === event.target.value){
-          this.lppSettings[i].checked = true;
-          this.paramsForGetLog.logsPerPage = event.target.value;
+  handleSettingLpp(event) {
+    for (let i in this.lppSettings) {
+      if (this.lppSettings[i].value === event.target.value) {
+        this.lppSettings[i].checked = true;
+        this.paramsForGetLog.logsPerPage = event.target.value;
       } else {
         this.lppSettings[i].checked = false;
       }
     }
     //  if tailing, reload logs
-    if(this.isSubscribeDisabled){
+    if (this.isSubscribeDisabled) {
       this.loadLogs();
     }
   }
 
-  toggleSubscribe(){
+  toggleSubscribe() {
     this.isSubscribeDisabled = !this.isSubscribeDisabled;
-    if (this.isSubscribeDisabled){
+    if (this.isSubscribeDisabled) {
       this.handleSubscribe();
     } else {
       this.handleUnsubscribe();
@@ -224,59 +210,62 @@ export default class LogReader extends LightningElement {
   }
 
   // Handles subscribe button click
- handleSubscribe() {
+  handleSubscribe() {
     const messageCallback = (response) => {
-        console.log("New message received : ", JSON.stringify(response));
-        this.payload = JSON.stringify(response);
-        console.log("this.payload: " + this.payload);
-        
-        // Add delay to allow trigger to complete
-        setTimeout(() => {
-            this.loadLogsWithRetry();
-        }, 500);
+      this.payload = JSON.stringify(response);
+      // Add delay to allow trigger to complete
+      setTimeout(() => {
+        this.loadLogsWithRetry();
+      }, 500);
     };
 
     subscribe(CHANNEL_NAME, -1, messageCallback)
-        .then(response => {
-            console.log("Successfully subscribed to : ", JSON.stringify(response.channel));
-            this.subscription = response;
-            this.toggleSubscribeButton(true);
-            this.paramsForGetLog.tailTimestamp = new Date().toISOString();
-            this.tailButton.variant = "brand";
-            this.tailButton.iconName = "utility:stop";
-            this.tailButton.title = "Stop tailing the logs";
-            this.tailButton.label = "Stop";
-            this.showToast('Success', 'New log entries are now being tailed.', 'success');
-        })
-        .catch(error => {
-            this.showToast('Error', 'Failed to subscribe to log updates: ' + error.message, 'error');
-        });
+      .then((response) => {
+        this.subscription = response;
+        this.toggleSubscribeButton(true);
+        this.paramsForGetLog.tailTimestamp = new Date().toISOString();
+        this.tailButton.variant = "brand";
+        this.tailButton.iconName = "utility:stop";
+        this.tailButton.title = "Stop tailing the logs";
+        this.tailButton.label = "Stop";
+        this.showToast(
+          "Success",
+          "New log entries are now being tailed.",
+          "success"
+        );
+      })
+      .catch((error) => {
+        console.error("Subscribe error:", error);
+
+        this.showToast(
+          "Error",
+          "Failed to subscribe to log updates: " + error.message,
+          "error"
+        );
+      });
   }
 
   loadLogsWithRetry(attempts = 3) {
-    this.paramsForGetLog.cacheBuster = (new Date()).getTime();
+    this.paramsForGetLog.cacheBuster = new Date().getTime();
     getLogs({ params: this.paramsForGetLog })
-        .then(result => {
-            this.logs = [];
-            for (const appLog of result) {
-                appLog.recordLink = "/" + appLog.Id;
-                this.logs.push(appLog);
-            }
-            this.logsError = undefined;
-            this.logsErrorJson = undefined;
-        })
-        .catch(error => {
-            console.error('Error loading logs:', error);
-            if (attempts > 0) {
-                setTimeout(() => {
-                    this.loadLogsWithRetry(attempts - 1);
-                }, 1000);
-            } else {
-                this.logsError = error;
-                this.logsErrorJson = JSON.stringify(error);
-                this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
-            }
-        });
+      .then((result) => {
+        this.allLogs = result;
+        this.logs = result;
+        this.logsError = undefined;
+        this.logsErrorJson = undefined;
+      })
+      .catch((error) => {
+        console.error("Error loading logs:", error);
+        if (attempts > 0) {
+          setTimeout(() => {
+            this.loadLogsWithRetry(attempts - 1);
+          }, 1000);
+        } else {
+          this.logsError = error;
+          this.logsErrorJson = JSON.stringify(error);
+          this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
+        }
+      });
   }
 
   // Handles unsubscribe button click
@@ -288,8 +277,7 @@ export default class LogReader extends LightningElement {
     this.tailButton.label = "Tail";
     this.paramsForGetLog.tailTimestamp = null;
     // Invoke unsubscribe method of empApi
-    unsubscribe(this.subscription, response => {
-      console.log("unsubscribe() response: ", JSON.stringify(response));
+    unsubscribe(this.subscription, (response) => {
       // Response is true for successful unsubscribe
     });
   }
@@ -299,38 +287,39 @@ export default class LogReader extends LightningElement {
     this.isUnsubscribeDisabled = !enableSubscribe;
   }
 
-  clearLogs(){
+  clearLogs() {
     this.logs = undefined;
+    this.allLogs = undefined;
   }
-  
+
   handleDeleteEntry(event) {
     const toDeleteId = event.detail.id;
     // Remove from logs array
-    this.logs = this.logs.filter(entry => entry.Id !== toDeleteId);
-    
+    this.logs = this.logs.filter((entry) => entry.Id !== toDeleteId);
+    this.allLogs = this.logs.filter((entry) => entry.Id !== toDeleteId);
     // Remove entry from database.
     deleteLog({ logId: toDeleteId })
-      .then(result => {
-        this.showToast('Success', 'Log entry deleted.', 'success');
+      .then((result) => {
+        this.showToast("Success", "Log entry deleted.", "success");
         this.logsError = undefined;
         this.logsErrorJson = undefined;
-        if(this.logs.length === 0){
+        if (this.logs.length === 0) {
           this.clearLogs();
         }
       })
-      .catch(error => {
-        this.showToast('Error', error, 'error');
+      .catch((error) => {
+        this.showToast("Error", error, "error");
         this.logsError = error;
         this.logsErrorJson = JSON.stringify(error);
         this.paramsForGetLogJson = JSON.stringify(this.paramsForGetLog);
       });
   }
-  
+
   showToast(title, message, variant) {
     const event = new ShowToastEvent({
-        title: title,
-        message: message,
-        variant: variant
+      title: title,
+      message: message,
+      variant: variant
     });
     this.dispatchEvent(event);
   }
