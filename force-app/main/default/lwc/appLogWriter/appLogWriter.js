@@ -15,7 +15,8 @@ import insertLogPe from "@salesforce/apex/LogUiController.insertLogPe";
 
 export default class AppLogWriter extends LightningElement {
   message = "";
-
+  loading = false;
+  
   get logLevelOptions() {
     return [
       { label: "INFO", value: "INFO", iconName: "utility:info" },
@@ -25,38 +26,28 @@ export default class AppLogWriter extends LightningElement {
     ];
   }
 
-  get isSubmitDisabled() {
-    return !this.message || this.message.trim().length === 0;
-  }
-
-  handleLogLevelChange(event) {
-    this.logLevel = event.target.value;
-  }
-
   handleMessageChange(event) {
     this.message = event.target.value;
   }
 
   async handleSubmit(event) {
+    this.loading = true;
     try {
       const className = "AppLogWriter.component";
+      let msg = this.message.length > 0 ? this.message : '[no message provided]';
 
       switch (event.target.value) {
         case "DEBUG":
-          await debug({ message: this.message, className: className });
+          await debug({ message: msg, className: className });
           break;
         case "INFO":
-          await info({ message: this.message, className: className });
+          await info({ message: msg, className: className });
           break;
         case "WARN":
-          await warn({ message: this.message, className: className });
+          await warn({ message: msg, className: className });
           break;
         case "ERROR":
-          await insertLogPe({
-            level: "ERROR",
-            message: this.message,
-            className: className
-          });
+          await insertLogPe({ level: "ERROR", message: msg, cls: className });
           break;
       }
 
@@ -68,6 +59,8 @@ export default class AppLogWriter extends LightningElement {
         "Error creating log entry: " + error.message,
         "error"
       );
+    } finally {
+      this.loading = false;
     }
   }
 
