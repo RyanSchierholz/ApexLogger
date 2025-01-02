@@ -1,6 +1,9 @@
 <!-- appLogWriter.html -->
 <template>
     <lightning-card title="Write Log Entry" icon-name="standard:record_update">
+        <template if:true={loading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
         <div class="slds-m-around_medium">
             <lightning-textarea 
                 class="slds-m-vertical_medium"
@@ -18,7 +21,7 @@
                             value={option.value}
                             icon-name={option.iconName}
                             onclick={handleSubmit} 
-                            disabled={isSubmitDisabled}>
+                            >
                         </lightning-button>
                     </template>
                 </lightning-button-group>
