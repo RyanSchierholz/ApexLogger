@@ -41,22 +41,22 @@ export default class LogChart extends LightningElement {
     return this._logData;
   }
 
-  // In logChart.js
   @api
   set chartType(value) {
-      this._chartType = value;
-      if (this.chart) {
-          this.chart.config.type = this.getChartType(value);
-          this.chart.update();
-      }
+    this._chartType = value;
+    if (this.chart) {
+      this.chart.config.type = this.getChartType(value);
+      this.chart.update();
+    }
   }
 
   get chartType() {
-      return this._chartType || 'bar';  // Only use default if nothing is passed
+    return this._chartType || "bar"; // Only use default if nothing is passed
   }
   error;
   chart;
   chartjsInitialized = false;
+  resizeTimeout;
 
   get config() {
     const dates = Object.keys(this.logData);
@@ -73,17 +73,22 @@ export default class LogChart extends LightningElement {
       datasets: levels.map((level) => ({
         label: level,
         data: dates.map((date) => this.logData[date][level] || 0),
-        backgroundColor: this.chartType === "line" ? 'transparent' : colors[level],
+        backgroundColor:
+          this.chartType === "line" ? "transparent" : colors[level],
         borderColor: colors[level],
-        borderWidth: ['line', 'area'].includes(this.chartType) ? 2 : 0,
-        pointRadius: ['line', 'area'].includes(this.chartType) ? 3 : null,  // Always show points for line and area
-        pointBackgroundColor: ['line', 'area'].includes(this.chartType) ? colors[level] : null,
-        pointBorderColor: ['line', 'area'].includes(this.chartType) ? colors[level] : null,
-        pointHoverRadius: ['line', 'area'].includes(this.chartType) ? 5 : null,
-        borderRadius: this.chartType === 'bar' ? 4 : null,
-        borderSkipped: this.chartType === 'bar' ? 'bottom' : false,
+        borderWidth: ["line", "area"].includes(this.chartType) ? 2 : 0,
+        pointRadius: ["line", "area"].includes(this.chartType) ? 3 : null, // Always show points for line and area
+        pointBackgroundColor: ["line", "area"].includes(this.chartType)
+          ? colors[level]
+          : null,
+        pointBorderColor: ["line", "area"].includes(this.chartType)
+          ? colors[level]
+          : null,
+        pointHoverRadius: ["line", "area"].includes(this.chartType) ? 5 : null,
+        borderRadius: this.chartType === "bar" ? 4 : null,
+        borderSkipped: this.chartType === "bar" ? "bottom" : false,
         fill: this.chartType === "area",
-        tension: ['line', 'area'].includes(this.chartType) ? 0.1 : null
+        tension: ["line", "area"].includes(this.chartType) ? 0.1 : null
       }))
     };
 
@@ -93,8 +98,6 @@ export default class LogChart extends LightningElement {
         backgroundColor: dataset.borderColor + "80"
       }));
     }
-
-    //  NEXT: check if stackedBar works - YES
 
     const t =
       this.chartType === "stackedBar"
@@ -106,7 +109,8 @@ export default class LogChart extends LightningElement {
       type: t,
       data: baseConfig,
       options: {
-        responsive: true,
+        responsive: false,
+        maintainAspectRatio: false,
         scales: {
           y: {
             ticks: {
@@ -122,7 +126,7 @@ export default class LogChart extends LightningElement {
         },
         interaction: {
           intersect: false,
-          mode: this.chartType === 'line' ? 'index' : 'nearest'
+          mode: this.chartType === "line" ? "index" : "nearest"
         }
       }
     };
@@ -135,11 +139,59 @@ export default class LogChart extends LightningElement {
     try {
       await loadScript(this, chartjs);
       const canvas = document.createElement("canvas");
-      this.template.querySelector("div.chart").appendChild(canvas);
+      const container = this.template.querySelector("div.chart");
+      container.appendChild(canvas);
+      // Set initial size
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+
       const ctx = canvas.getContext("2d");
       this.chart = new window.Chart(ctx, this.config);
     } catch (error) {
       this.error = error;
+    }
+  }
+
+  // Add lifecycle hooks for resize handling
+  connectedCallback() {
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("resize", this.handleResize);
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+  }
+
+  // Add resize handler
+  handleResize = () => {
+    // Clear any existing timeout
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+
+    // Set a new timeout to debounce the resize
+    this.resizeTimeout = setTimeout(() => {
+      this.resizeChart();
+    }, 250);
+  };
+
+  // Add resize chart method
+  resizeChart() {
+    if (!this.chart) return;
+
+    const container = this.template.querySelector("div.chart");
+    const canvas = container.querySelector("canvas");
+
+    if (container && canvas) {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      this.chart.resize();
     }
   }
 }

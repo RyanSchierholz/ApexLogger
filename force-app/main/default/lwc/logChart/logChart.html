@@ -1,3 +1,6 @@
-<template>   
-    <div class="chart slds-var-m-around_x-small" lwc:dom="manual"></div>
+<template>
+    <div if:true={error} class="slds-text-color_error">{error}</div>
+    <div class="chart slds-var-m-around_x-small" lwc:dom="manual" style="height:20vh;">
+        <!-- canvas element created via js -->
+    </div>
 </template>
