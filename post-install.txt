@@ -1,0 +1,1 @@
+Ensure users that should be able to read the logs are assigned the App Log Reader (AppLogReader) permission set.
