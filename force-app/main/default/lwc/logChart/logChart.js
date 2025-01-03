@@ -14,7 +14,7 @@
  */
 import { LightningElement, api } from "lwc";
 import { loadScript } from "lightning/platformResourceLoader";
-import chartjs from "@salesforce/resourceUrl/chartJs";
+import chartjs from "@salesforce/resourceUrl/logChartJs";
 
 /**
  * When using this component in an LWR site, please import the below custom implementation of 'loadScript' module
