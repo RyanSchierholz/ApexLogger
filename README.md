@@ -170,7 +170,7 @@ to log INFO,DEBUG,WARN,ERROR. It might be desirable to reduce this for productio
 
   [![Deploy](https://raw.githubusercontent.com/afawcett/githubsfdeploy/master/src/main/webapp/resources/img/deploy.png)](https://githubsfdeploy.herokuapp.com/app/githubdeploy/mlockett/ApexLogger)
 
-  After deploying: 
+###  After deploying: 
 
   * Ensure users that should be able to read the logs are assigned the AppLogReader permission set.
   * Add an assignment on the _App Logs_ application to the profiles of users that should read logs.
